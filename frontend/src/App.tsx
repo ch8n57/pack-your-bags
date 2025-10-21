@@ -19,93 +19,136 @@ const Navigation = () => {
   const { isAuthenticated, user, logout } = useAuth();
 
   return (
-    <AppBar position="static" sx={{ 
-      backgroundColor: 'white', 
-      boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+    <AppBar position="static" sx={{
+      backgroundColor: 'white',
+      boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
+      borderBottom: '1px solid rgba(0,0,0,0.06)',
     }}>
-      <Toolbar>
-        <Typography variant="h5" component="div" sx={{ 
-          flexGrow: 1, 
-          fontWeight: 600,
-          color: 'primary.main'
+      <Toolbar sx={{ py: 1 }}>
+        <Typography variant="h5" component="div" sx={{
+          flexGrow: 1,
+          fontWeight: 700,
+          color: 'primary.main',
+          letterSpacing: '-0.02em'
         }}>
-          <Link to="/" style={{ 
-            color: 'inherit', 
+          <Link to="/" style={{
+            color: 'inherit',
             textDecoration: 'none',
             display: 'flex',
             alignItems: 'center',
-            gap: 1
+            gap: 8,
+            transition: 'opacity 0.2s ease'
           }}>
-            🌎 Pack Your Bags
+            <span style={{ fontSize: '1.5rem' }}>🌎</span>
+            Pack Your Bags
           </Link>
         </Typography>
-        <Box sx={{ 
-          display: 'flex', 
-          gap: 2,
-          alignItems: 'center'
+        <Box sx={{
+          display: 'flex',
+          gap: { xs: 1, sm: 2 },
+          alignItems: 'center',
+          flexWrap: 'wrap'
         }}>
           {isAuthenticated ? (
             <>
-              <Button 
-                color="primary" 
-                component={Link} 
+              <Button
+                color="primary"
+                component={Link}
                 to="/my-bookings"
-                startIcon={<span>📅</span>}
-                sx={{ fontWeight: 500 }}
+                sx={{
+                  fontWeight: 500,
+                  textTransform: 'none',
+                  fontSize: '0.95rem',
+                  transition: 'all 0.2s ease',
+                  '&:hover': {
+                    backgroundColor: 'rgba(25, 118, 210, 0.04)'
+                  }
+                }}
               >
                 My Bookings
               </Button>
               {user?.role === 'admin' && (
-                <Button 
-                  color="primary" 
-                  component={Link} 
+                <Button
+                  color="primary"
+                  component={Link}
                   to="/admin"
-                  startIcon={<span>⚙️</span>}
-                  sx={{ fontWeight: 500 }}
+                  sx={{
+                    fontWeight: 500,
+                    textTransform: 'none',
+                    fontSize: '0.95rem',
+                    transition: 'all 0.2s ease',
+                    '&:hover': {
+                      backgroundColor: 'rgba(25, 118, 210, 0.04)'
+                    }
+                  }}
                 >
                   Admin Dashboard
                 </Button>
               )}
-              <Box sx={{ 
-                display: 'flex', 
+              <Box sx={{
+                display: 'flex',
                 alignItems: 'center',
                 gap: 1,
-                color: 'text.secondary',
+                color: 'text.primary',
                 px: 2,
-                py: 0.5,
-                borderRadius: 1,
-                bgcolor: 'grey.50'
+                py: 0.75,
+                borderRadius: 2,
+                bgcolor: 'rgba(25, 118, 210, 0.08)',
+                border: '1px solid rgba(25, 118, 210, 0.2)'
               }}>
                 <span>👤</span>
                 <Typography variant="body2">{user?.firstName}</Typography>
               </Box>
-              <Button 
-                color="error" 
+              <Button
+                color="error"
                 variant="outlined"
                 onClick={logout}
                 size="small"
-                startIcon={<span>🚪</span>}
+                sx={{
+                  textTransform: 'none',
+                  fontWeight: 500,
+                  borderRadius: 2,
+                  transition: 'all 0.2s ease'
+                }}
               >
                 Logout
               </Button>
             </>
           ) : (
             <>
-              <Button 
-                color="primary" 
-                component={Link} 
+              <Button
+                color="primary"
+                component={Link}
                 to="/login"
                 variant="outlined"
-                sx={{ fontWeight: 500 }}
+                sx={{
+                  fontWeight: 500,
+                  textTransform: 'none',
+                  borderRadius: 2,
+                  transition: 'all 0.2s ease',
+                  '&:hover': {
+                    backgroundColor: 'rgba(25, 118, 210, 0.04)'
+                  }
+                }}
               >
                 Login
               </Button>
-              <Button 
-                color="primary" 
-                component={Link} 
+              <Button
+                color="primary"
+                component={Link}
                 to="/register"
                 variant="contained"
-                sx={{ fontWeight: 500 }}
+                sx={{
+                  fontWeight: 600,
+                  textTransform: 'none',
+                  borderRadius: 2,
+                  boxShadow: 'none',
+                  transition: 'all 0.2s ease',
+                  '&:hover': {
+                    boxShadow: '0 4px 12px rgba(25, 118, 210, 0.3)',
+                    transform: 'translateY(-1px)'
+                  }
+                }}
               >
                 Register
               </Button>
@@ -121,7 +164,7 @@ const App = () => (
   <Router>
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       <Navigation />
-      <Container sx={{ flex: 1, py: 4 }}>
+      <Container maxWidth="lg" sx={{ flex: 1, py: 4, animation: 'fadeIn 0.5s ease' }}>
         <Routes>
           <Route path="/" element={<PackageList />} />
           <Route path="/login" element={<Login />} />
@@ -134,17 +177,15 @@ const App = () => (
       <Box
         component="footer"
         sx={{
-          py: 3,
+          py: 4,
           px: 2,
           mt: 'auto',
-          backgroundColor: (theme) =>
-            theme.palette.mode === 'light'
-              ? theme.palette.grey[200]
-              : theme.palette.grey[800],
+          backgroundColor: '#1a1a1a',
+          borderTop: '1px solid rgba(255,255,255,0.1)',
         }}
       >
         <Container maxWidth="sm">
-          <Typography variant="body2" color="text.secondary" align="center">
+          <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)' }} align="center">
             © {new Date().getFullYear()} Pack Your Bags. All rights reserved.
           </Typography>
         </Container>
