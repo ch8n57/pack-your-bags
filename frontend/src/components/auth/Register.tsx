@@ -17,6 +17,7 @@ import axios from 'axios';
 export const Register = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState<RegisterData & { confirmPassword: string }>({
+    username: '',
     firstName: '',
     lastName: '',
     email: '',
@@ -34,7 +35,7 @@ export const Register = () => {
     e.preventDefault();
     try {
       // Validate form data
-      if (!formData.firstName || !formData.lastName || !formData.email || !formData.password || !formData.confirmPassword || !formData.phoneNumber) {
+      if (!formData.username || !formData.firstName || !formData.lastName || !formData.email || !formData.password || !formData.confirmPassword || !formData.phoneNumber) {
         setToast({
           open: true,
           message: 'Please fill in all required fields',
@@ -89,6 +90,7 @@ export const Register = () => {
         });
         // Clear form data
         setFormData({
+          username: '',
           firstName: '',
           lastName: '',
           email: '',
@@ -158,6 +160,18 @@ export const Register = () => {
         </Typography>
         <Box component="form" onSubmit={handleSubmit} sx={{ mt: 3 }}>
           <Grid container spacing={2}>
+            <Grid item xs={12}>
+              <TextField
+                required
+                fullWidth
+                id="username"
+                label="Username"
+                name="username"
+                autoComplete="username"
+                value={formData.username}
+                onChange={handleChange}
+              />
+            </Grid>
             <Grid item xs={12} sm={6}>
               <TextField
                 required

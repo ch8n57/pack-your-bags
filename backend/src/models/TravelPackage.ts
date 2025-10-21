@@ -21,6 +21,9 @@ export class TravelPackage {
   @Column()
   duration: number;
 
+  @Column('decimal', { default: 0 })
+  rating: number;
+
   @Column('simple-array')
   inclusions: string[];
 

@@ -6,7 +6,7 @@ export interface Payment {
   amount: number;
   status: 'pending' | 'completed' | 'failed' | 'refunded';
   transactionId: string | null;
-  paymentMethod: string | null;
+  paymentMode: string | null;
   paymentDetails: {
     provider: string;
     lastFourDigits?: string;

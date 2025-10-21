@@ -6,6 +6,11 @@ export class User {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
+  @Column({ unique: true })
+  @IsNotEmpty({ message: 'Username is required' })
+  @Length(3, 30, { message: 'Username must be between 3 and 30 characters' })
+  username: string;
+
   @Column()
   @IsNotEmpty({ message: 'First name is required' })
   @Length(2, 50, { message: 'First name must be between 2 and 50 characters' })
@@ -27,7 +32,7 @@ export class User {
   password: string;
 
   @Column({ default: 'user' })
-  role: 'user' | 'admin';
+  role: 'user' | 'agent' | 'admin';
 
   @Column({ nullable: true })
   phoneNumber: string;

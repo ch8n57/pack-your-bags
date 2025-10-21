@@ -24,7 +24,7 @@ export class Payment {
   transactionId: string;
 
   @Column({ nullable: true })
-  paymentMethod: string;
+  paymentMode: string;
 
   @Column({ type: 'jsonb', nullable: true })
   paymentDetails: {
