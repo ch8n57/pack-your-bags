@@ -33,19 +33,6 @@ import { LoadingSpinner } from '../shared/LoadingSpinner';
 import { Toast } from '../shared/Toast';
 
 import type { Booking, TravelPackage } from '../../types';
-}
-
-interface TravelPackage {
-  id: string;
-  name: string;
-  destination: string;
-  description: string;
-  price: number;
-  duration: number;
-  maxTravelers: number;
-  isAvailable?: boolean;
-  inclusions: string[];
-}
 
 export const AdminDashboard = () => {
   const [bookingsList, setBookingsList] = useState<Booking[]>([]);

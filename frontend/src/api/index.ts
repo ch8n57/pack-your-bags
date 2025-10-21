@@ -1,7 +1,7 @@
 import axios from 'axios';
 import type { AuthResponse, LoginData, TravelPackage, Booking, SearchParams, Payment } from '../types';
 
-const API_URL = 'http://localhost:3003/api';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3002/api';
 
 export interface RegisterData {
   username: string;
@@ -77,6 +77,8 @@ export const bookings = {
 export const payments = {
   createPaymentIntent: (bookingId: string) =>
     api.post<{ clientSecret: string }>('/payments/create-payment-intent', { bookingId }),
+  confirmPayment: (paymentIntentId: string, bookingId: string) =>
+    api.post<{ message: string }>('/payments/confirm-payment', { paymentIntentId, bookingId }),
   getHistory: () =>
     api.get<Payment[]>('/payments/history'),
 };

@@ -6,6 +6,7 @@ import { Payment } from '../models/Payment';
 import { Review } from '../models/Review';
 import { Itinerary } from '../models/Itinerary';
 import { Message } from '../models/Message';
+import { Provider } from '../models/Provider';
 import { createSamplePackages } from '../seed/samplePackages';
 import { seedUsers } from '../seed/users';
 import dotenv from 'dotenv';
@@ -19,19 +20,9 @@ export const AppDataSource = new DataSource({
   username: process.env.DB_USERNAME || 'postgres',
   password: process.env.DB_PASSWORD || '2004',
   database: process.env.DB_NAME || 'pack_your_bags',
-  synchronize: true, // Set to false in production
-  logging: true,
-  entities: [User, TravelPackage, Booking, Payment, Review, Itinerary, Message],
+  synchronize: process.env.NODE_ENV !== 'production', // Set to false in production
+  logging: process.env.NODE_ENV === 'development',
+  entities: [User, TravelPackage, Booking, Payment, Review, Itinerary, Message, Provider],
   subscribers: [],
   migrations: [],
 });
-
-AppDataSource.initialize()
-  .then(async () => {
-    console.log('Data Source has been initialized!');
-    await seedUsers();
-    await createSamplePackages();
-  })
-  .catch((err) => {
-    console.error('Error during Data Source initialization:', err);
-  });

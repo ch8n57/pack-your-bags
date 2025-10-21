@@ -1,9 +1,9 @@
-import { getRepository } from 'typeorm';
+import { AppDataSource } from '../config/database';
 import { hash } from 'bcryptjs';
 import { User } from '../models/User';
 
 export async function seedUsers() {
-  const userRepository = getRepository(User);
+  const userRepository = AppDataSource.getRepository(User);
   
   // Check if admin already exists
   const existingAdmin = await userRepository.findOne({ where: { email: 'admin@packyourbags.com' } });

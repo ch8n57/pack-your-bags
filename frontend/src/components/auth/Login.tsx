@@ -19,10 +19,14 @@ export const Login = () => {
     email: '',
     password: '',
   });
-  const [toast, setToast] = useState({
+  const [toast, setToast] = useState<{
+    open: boolean;
+    message: string;
+    severity: 'success' | 'error' | 'info' | 'warning';
+  }>({
     open: false,
     message: '',
-    severity: 'success' as const,
+    severity: 'success',
   });
 
   const handleSubmit = async (e: React.FormEvent) => {

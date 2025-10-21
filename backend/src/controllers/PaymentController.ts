@@ -1,5 +1,7 @@
 import { Request, Response } from 'express';
 import Stripe from 'stripe';
+import dotenv from 'dotenv';
+dotenv.config();
 import { AppDataSource } from '../config/database';
 import { Payment } from '../models/Payment';
 import { Booking } from '../models/Booking';
@@ -49,25 +51,12 @@ export class PaymentController {
   }
 
   static async handleStripeWebhook(req: Request, res: Response) {
-    const sig = req.headers['stripe-signature'];
-
-    try {
-      const event = stripe.webhooks.constructEvent(
-        req.body,
-        sig as string,
-        process.env.STRIPE_WEBHOOK_SECRET as string
-      );
-
-      if (event.type === 'payment_intent.succeeded') {
-        const paymentIntent = event.data.object as Stripe.PaymentIntent;
-        await PaymentController.handleSuccessfulPayment(paymentIntent);
-      }
-
-      res.json({ received: true });
-    } catch (error: any) {
-      console.error('Webhook Error:', error);
-      res.status(400).send(`Webhook Error: ${error?.message || 'Unknown error'}`);
-    }
+    // Webhook endpoint - currently disabled since webhook is not set up
+    console.log('Webhook endpoint called but webhook is not configured');
+    res.json({ 
+      received: true, 
+      message: 'Webhook endpoint is available but webhook is not configured' 
+    });
   }
 
   private static async handleSuccessfulPayment(paymentIntent: Stripe.PaymentIntent) {
@@ -98,6 +87,27 @@ export class PaymentController {
       });
 
       await paymentRepository.save(payment);
+    }
+  }
+
+  static async confirmPayment(req: AuthRequest, res: Response) {
+    try {
+      const { paymentIntentId, bookingId } = req.body;
+
+      // Verify the payment intent with Stripe
+      const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+      
+      if (paymentIntent.status !== 'succeeded') {
+        return res.status(400).json({ message: 'Payment not successful' });
+      }
+
+      // Handle the successful payment
+      await PaymentController.handleSuccessfulPayment(paymentIntent);
+
+      res.json({ message: 'Payment confirmed successfully' });
+    } catch (error) {
+      console.error('Error confirming payment:', error);
+      res.status(500).json({ message: 'Error confirming payment' });
     }
   }
 

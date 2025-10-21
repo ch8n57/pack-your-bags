@@ -12,15 +12,22 @@ export class AuthController {
       const { username, firstName, lastName, email, password, phoneNumber } = req.body;
 
       // Validate required fields
-      if (!username || !firstName || !lastName || !email || !password) {
+      if (!firstName || !lastName || !email || !password) {
         return res.status(400).json({ message: 'All required fields must be provided' });
       }
 
       // Check if user already exists
       const existingUserByEmail = await userRepository.findOne({ where: { email } });
-      const existingUserByUsername = await userRepository.findOne({ where: { username } });
-      if (existingUserByEmail || existingUserByUsername) {
+      if (existingUserByEmail) {
         return res.status(400).json({ message: 'User already exists' });
+      }
+
+      // Check username if provided
+      if (username) {
+        const existingUserByUsername = await userRepository.findOne({ where: { username } });
+        if (existingUserByUsername) {
+          return res.status(400).json({ message: 'Username already exists' });
+        }
       }
 
       // Create new user

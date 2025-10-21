@@ -6,8 +6,7 @@ export class User {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ unique: true })
-  @IsNotEmpty({ message: 'Username is required' })
+  @Column({ unique: true, nullable: true })
   @Length(3, 30, { message: 'Username must be between 3 and 30 characters' })
   username: string;
 

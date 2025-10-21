@@ -23,6 +23,7 @@ export interface TravelPackage {
   maxTravelers: number;
   inclusions: string[];
   rating?: number;
+  isAvailable?: boolean;
 }
 
 export interface Payment {
