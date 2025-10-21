@@ -1,12 +1,9 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import { ThemeProvider } from '@mui/material/styles'
-import CssBaseline from '@mui/material/CssBaseline'
 import './index.css'
 import App from './App.tsx'
 import { AuthProvider } from './contexts/AuthContext'
 import { ErrorBoundary } from './components/shared/ErrorBoundary'
-import { theme } from './theme'
 
 // Add global error handlers
 window.addEventListener('unhandledrejection', (event) => {
