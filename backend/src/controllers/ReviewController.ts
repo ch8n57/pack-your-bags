@@ -19,6 +19,9 @@ export class ReviewController {
       const userRepository = AppDataSource.getRepository(User);
 
       const { travelPackageId, rating, comment } = req.body;
+      if (rating < 1 || rating > 5) {
+        return res.status(400).json({ message: 'Rating must be between 1 and 5' });
+      }
 
       const travelPackage = await packageRepository.findOne({ where: { id: travelPackageId } });
       if (!travelPackage) {

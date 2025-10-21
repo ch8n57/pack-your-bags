@@ -4,6 +4,7 @@ import type { AuthResponse, LoginData, TravelPackage, Booking, SearchParams, Pay
 const API_URL = 'http://localhost:3003/api';
 
 export interface RegisterData {
+  username: string;
   firstName: string;
   lastName: string;
   email: string;

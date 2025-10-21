@@ -31,6 +31,9 @@ export class Itinerary {
     }[];
   }[];
 
+  @Column('date', { nullable: true })
+  travelDate: Date;
+
   @CreateDateColumn()
   createdAt: Date;
 

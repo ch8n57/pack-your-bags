@@ -91,7 +91,7 @@ export class PaymentController {
         amount: booking.totalPrice,
         status: 'completed',
         transactionId: paymentIntent.id,
-        paymentMethod: 'card',
+        paymentMode: 'card',
         paymentDetails: {
           provider: 'stripe'
         }

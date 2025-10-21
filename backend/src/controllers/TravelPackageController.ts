@@ -32,7 +32,7 @@ export class TravelPackageController {
 
   static async searchPackages(req: Request, res: Response) {
     try {
-      const { destination, minPrice, maxPrice, duration } = req.query;
+      const { destination, minPrice, maxPrice, duration } = req.query as any;
       const packageRepository = AppDataSource.getRepository(TravelPackage);
       
       let query = packageRepository.createQueryBuilder('package')

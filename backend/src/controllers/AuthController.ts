@@ -9,21 +9,23 @@ export class AuthController {
   static async register(req: Request, res: Response) {
     try {
       const userRepository = AppDataSource.getRepository(User);
-      const { firstName, lastName, email, password, phoneNumber } = req.body;
+      const { username, firstName, lastName, email, password, phoneNumber } = req.body;
 
       // Validate required fields
-      if (!firstName || !lastName || !email || !password) {
+      if (!username || !firstName || !lastName || !email || !password) {
         return res.status(400).json({ message: 'All required fields must be provided' });
       }
 
       // Check if user already exists
-      const existingUser = await userRepository.findOne({ where: { email } });
-      if (existingUser) {
+      const existingUserByEmail = await userRepository.findOne({ where: { email } });
+      const existingUserByUsername = await userRepository.findOne({ where: { username } });
+      if (existingUserByEmail || existingUserByUsername) {
         return res.status(400).json({ message: 'User already exists' });
       }
 
       // Create new user
       const user = userRepository.create({
+        username,
         firstName,
         lastName,
         email,
@@ -54,6 +56,7 @@ export class AuthController {
         token,
         user: {
           id: savedUser.id,
+          username: savedUser.username,
           firstName: savedUser.firstName,
           lastName: savedUser.lastName,
           email: savedUser.email,
@@ -95,7 +98,17 @@ export class AuthController {
         { expiresIn: '1h' }
       );
 
-      res.json({ token });
+      res.json({ 
+        token,
+        user: {
+          id: user.id,
+          username: user.username,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          email: user.email,
+          role: user.role
+        }
+      });
     } catch (error) {
       console.error('Login error:', error);
       res.status(500).json({ message: 'Error logging in' });

@@ -1,9 +1,10 @@
 export interface User {
   id: string;
+  username: string;
   firstName: string;
   lastName: string;
   email: string;
-  role: 'user' | 'admin';
+  role: 'user' | 'agent' | 'admin';
 }
 
 export interface AuthResponse {
@@ -21,6 +22,7 @@ export interface TravelPackage {
   duration: number;
   maxTravelers: number;
   inclusions: string[];
+  rating?: number;
 }
 
 export interface Payment {

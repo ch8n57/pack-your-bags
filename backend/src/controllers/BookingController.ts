@@ -3,6 +3,7 @@ import { Booking } from '../models/Booking';
 import { TravelPackage } from '../models/TravelPackage';
 import { User } from '../models/User';
 import { AppDataSource } from '../config/database';
+import { Payment } from '../models/Payment';
 
 interface AuthRequest extends Request {
   user?: {
@@ -47,7 +48,18 @@ export class BookingController {
       });
 
       await bookingRepository.save(booking);
-      res.status(201).json(booking);
+
+      // Create a pending payment record (client will complete via Stripe intent)
+      const paymentRepository = AppDataSource.getRepository(Payment);
+      const payment = paymentRepository.create({
+        booking,
+        amount: booking.totalPrice,
+        status: 'pending',
+        paymentDetails: { provider: 'stripe' },
+      });
+      await paymentRepository.save(payment);
+
+      res.status(201).json({ booking, paymentId: payment.id });
     } catch (error) {
       console.error('Error creating booking:', error);
       res.status(500).json({ message: 'Error creating booking' });
