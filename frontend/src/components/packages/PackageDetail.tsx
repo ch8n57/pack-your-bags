@@ -118,7 +118,7 @@ export const PackageDetail = () => {
       const response = await bookings.create(bookingPayload);
       setBookingDialogOpen(false);
       setPaymentDialogOpen(true);
-      setCurrentBooking(response.data);
+      setCurrentBooking(response.data.booking);
     } catch (error: any) {
       setToast({
         open: true,
@@ -266,10 +266,15 @@ export const PackageDetail = () => {
       {currentBooking && (
         <PaymentDialog
           open={paymentDialogOpen}
-          onClose={() => setPaymentDialogOpen(false)}
+          onClose={() => {
+            setPaymentDialogOpen(false);
+            setCurrentBooking(null);
+          }}
           bookingId={currentBooking.id}
           amount={currentBooking.totalPrice}
           onPaymentSuccess={() => {
+            setPaymentDialogOpen(false);
+            setCurrentBooking(null);
             setToast({
               open: true,
               message: 'Booking and payment completed successfully!',

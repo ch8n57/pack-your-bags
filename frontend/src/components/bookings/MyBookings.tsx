@@ -24,7 +24,7 @@ interface Booking {
   };
   numberOfTravelers: number;
   totalPrice: number;
-  status: 'pending' | 'confirmed' | 'cancelled';
+  status: 'pending' | 'confirmed' | 'cancelled' | 'completed';
   travelDate: string;
   createdAt: string;
 }
@@ -32,6 +32,7 @@ interface Booking {
 export const MyBookings = () => {
   const [userBookings, setUserBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
+  const [cancellingBookingId, setCancellingBookingId] = useState<string | null>(null);
   const [toast, setToast] = useState<{
     open: boolean;
     message: string;
@@ -61,6 +62,31 @@ export const MyBookings = () => {
     }
   };
 
+  const handleCancelBooking = async (bookingId: string) => {
+    try {
+      setCancellingBookingId(bookingId);
+      await bookings.updateStatus(bookingId, 'cancelled');
+      
+      setToast({
+        open: true,
+        message: 'Booking cancelled successfully',
+        severity: 'success',
+      });
+      
+      // Refresh bookings list
+      await fetchUserBookings();
+    } catch (error: any) {
+      console.error('Error cancelling booking:', error);
+      setToast({
+        open: true,
+        message: error.response?.data?.message || 'Error cancelling booking',
+        severity: 'error',
+      });
+    } finally {
+      setCancellingBookingId(null);
+    }
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'confirmed':
@@ -69,6 +95,8 @@ export const MyBookings = () => {
         return 'warning';
       case 'cancelled':
         return 'error';
+      case 'completed':
+        return 'primary';
       default:
         return 'default';
     }
@@ -111,17 +139,16 @@ export const MyBookings = () => {
                       color={getStatusColor(booking.status) as any}
                       sx={{ fontWeight: 600, px: 1 }}
                     />
-                    {booking.status === 'pending' && (
+                    {(booking.status === 'pending' || booking.status === 'confirmed') && (
                       <Button
                         variant="outlined"
                         color="error"
                         size="small"
-                        onClick={() =>
-                          bookings.updateStatus(booking.id, 'cancelled')
-                        }
+                        onClick={() => handleCancelBooking(booking.id)}
+                        disabled={cancellingBookingId === booking.id}
                         sx={{ textTransform: 'none', fontWeight: 600, borderRadius: 2 }}
                       >
-                        Cancel Booking
+                        {cancellingBookingId === booking.id ? 'Cancelling...' : 'Cancel Booking'}
                       </Button>
                     )}
                   </Box>

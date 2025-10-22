@@ -10,6 +10,8 @@ router.get('/my-bookings', auth, BookingController.getUserBookings);
 
 // Admin routes
 router.get('/all', [auth, adminAuth], BookingController.getAllBookings);
-router.patch('/:id/status', [auth, adminAuth], BookingController.updateBookingStatus);
+
+// User routes (users can update their own bookings, admins can update any)
+router.patch('/:id/status', auth, BookingController.updateBookingStatus);
 
 export default router;

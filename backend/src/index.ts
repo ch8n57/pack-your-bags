@@ -33,10 +33,12 @@ app.use(morgan('combined'));
 app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true }));
 
-// Initialize database connection
-AppDataSource.initialize()
-  .then(async () => {
+// Initialize database connection and start server
+async function startServer() {
+  try {
+    await AppDataSource.initialize();
     console.log('Database connected successfully');
+    
     try {
       await seedUsers();
       await createSamplePackages();
@@ -44,33 +46,36 @@ AppDataSource.initialize()
     } catch (seedErr) {
       console.error('Seeding error:', seedErr);
     }
-  })
-  .catch((error) => {
+
+    // Routes
+    app.use('/api/auth', authRoutes);
+    app.use('/api/packages', packageRoutes);
+    app.use('/api/bookings', bookingRoutes);
+    app.use('/api/reviews', reviewRoutes);
+    app.use('/api/itineraries', itineraryRoutes);
+    app.use('/api/payments', paymentRoutes);
+    app.use('/api/admin', adminRoutes);
+
+    // Basic route
+    app.get('/', (req, res) => {
+      res.json({ message: 'Welcome to Pack Your Bags API' });
+    });
+
+    // Error handling middleware
+    app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+      console.error(err.stack);
+      res.status(500).json({ message: 'Something went wrong!' });
+    });
+
+    // Start server
+    const PORT = process.env.PORT || 9000;
+    app.listen(PORT, () => {
+      console.log(`Server is running on port ${PORT}`);
+    });
+  } catch (error) {
     console.error('Error connecting to database:', error);
-  });
+    process.exit(1);
+  }
+}
 
-// Routes
-app.use('/api/auth', authRoutes);
-app.use('/api/packages', packageRoutes);
-app.use('/api/bookings', bookingRoutes);
-app.use('/api/reviews', reviewRoutes);
-app.use('/api/itineraries', itineraryRoutes);
-app.use('/api/payments', paymentRoutes);
-app.use('/api/admin', adminRoutes);
-
-// Basic route
-app.get('/', (req, res) => {
-  res.json({ message: 'Welcome to Pack Your Bags API' });
-});
-
-// Error handling middleware
-app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
-  console.error(err.stack);
-  res.status(500).json({ message: 'Something went wrong!' });
-});
-
-// Start server
-const PORT = process.env.PORT || 3001;
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-});
+startServer();

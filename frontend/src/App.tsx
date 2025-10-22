@@ -161,7 +161,7 @@ const Navigation = () => {
 };
 
 const App = () => (
-  <Router>
+  <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       <Navigation />
       <Container maxWidth="lg" sx={{ flex: 1, py: 4, animation: 'fadeIn 0.5s ease' }}>

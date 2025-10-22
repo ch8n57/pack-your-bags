@@ -27,7 +27,7 @@ import {
   Tooltip,
   TableSortLabel,
 } from '@mui/material';
-import { Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
+import { Edit as EditIcon, Delete as DeleteIcon, Block as BlockIcon } from '@mui/icons-material';
 import { packages, bookings } from '../../api';
 import { LoadingSpinner } from '../shared/LoadingSpinner';
 import { Toast } from '../shared/Toast';
@@ -132,6 +132,25 @@ export const AdminDashboard = () => {
     }
   };
 
+  const handleMakePackageUnavailable = async (packageId: string) => {
+    try {
+      await packages.makeUnavailable(packageId);
+      setToast({
+        open: true,
+        message: 'Package made unavailable successfully. No new bookings can be made.',
+        severity: 'success',
+      });
+      fetchData();
+    } catch (error: any) {
+      console.error('Error making package unavailable:', error);
+      setToast({
+        open: true,
+        message: error.response?.data?.message || 'Error making package unavailable',
+        severity: 'error',
+      });
+    }
+  };
+
   const handleDeletePackage = async (packageId: string) => {
     try {
       await packages.delete(packageId);
@@ -141,16 +160,32 @@ export const AdminDashboard = () => {
         severity: 'success',
       });
       fetchData();
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Error deleting package:', error);
       setToast({
         open: true,
-        message: 'Error deleting package',
+        message: error.response?.data?.message || 'Error deleting package',
         severity: 'error',
       });
     }
   };
 
-  const handleUpdateBookingStatus = async (bookingId: string, status: 'pending' | 'confirmed' | 'cancelled') => {
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'confirmed':
+        return 'success';
+      case 'pending':
+        return 'warning';
+      case 'cancelled':
+        return 'error';
+      case 'completed':
+        return 'primary';
+      default:
+        return 'default';
+    }
+  };
+
+  const handleUpdateBookingStatus = async (bookingId: string, status: 'pending' | 'confirmed' | 'cancelled' | 'completed') => {
     try {
       await bookings.updateStatus(bookingId, status);
       setToast({
@@ -218,7 +253,7 @@ export const AdminDashboard = () => {
                 <Typography variant="h5">
                   ${bookingsList
                     .filter(b => b.status === 'confirmed')
-                    .reduce((sum, b) => sum + Number(b.totalPrice), 0)
+                    .reduce((sum, b) => sum + Number(b.totalPrice || 0), 0)
                     .toFixed(2)}
                 </Typography>
                 <Typography variant="body2" color="textSecondary">
@@ -231,7 +266,10 @@ export const AdminDashboard = () => {
 
         <Box sx={{ mb: 4 }}>
           <Typography variant="h5" gutterBottom>
-            Travel Packages
+            Package Management
+          </Typography>
+          <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
+            Create, edit, and manage travel packages
           </Typography>
           <Button
             variant="contained"
@@ -289,7 +327,7 @@ export const AdminDashboard = () => {
                     <TableRow key={pack.id}>
                       <TableCell>{pack.name}</TableCell>
                       <TableCell>{pack.destination}</TableCell>
-                      <TableCell>${pack.price.toFixed(2)}</TableCell>
+                      <TableCell>${Number(pack.price || 0).toFixed(2)}</TableCell>
                       <TableCell>{pack.duration} days</TableCell>
                       <TableCell>{pack.maxTravelers}</TableCell>
                       <TableCell>
@@ -319,7 +357,17 @@ export const AdminDashboard = () => {
                             <EditIcon />
                           </IconButton>
                         </Tooltip>
-                        <Tooltip title="Delete">
+                        <Tooltip title={pack.isAvailable ? "Make Unavailable" : "Package is unavailable"}>
+                          <IconButton
+                            size="small"
+                            color={pack.isAvailable ? "warning" : "default"}
+                            onClick={() => handleMakePackageUnavailable(pack.id)}
+                            disabled={!pack.isAvailable}
+                          >
+                            <BlockIcon />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Delete Permanently">
                           <IconButton
                             size="small"
                             color="error"
@@ -338,56 +386,98 @@ export const AdminDashboard = () => {
 
         <Box sx={{ my: 4 }}>
           <Typography variant="h5" gutterBottom>
-            Bookings
+            All User Bookings
+          </Typography>
+          <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
+            Manage all customer bookings and their status
           </Typography>
           <TableContainer component={Paper}>
             <Table>
               <TableHead>
                 <TableRow>
-                  <TableCell>Customer</TableCell>
-                  <TableCell>Package</TableCell>
+                  <TableCell>Customer Details</TableCell>
+                  <TableCell>Package Booked</TableCell>
                   <TableCell>Travel Date</TableCell>
                   <TableCell>Travelers</TableCell>
                   <TableCell>Total Price</TableCell>
                   <TableCell>Status</TableCell>
-                  <TableCell>Actions</TableCell>
+                  <TableCell>Admin Actions</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
-                {bookingsList.map((booking) => (
-                  <TableRow key={booking.id}>
-                    <TableCell>
-                      {booking.user.firstName} {booking.user.lastName}
-                      <br />
-                      <Typography variant="caption">{booking.user.email}</Typography>
-                    </TableCell>
-                    <TableCell>{booking.travelPackage.name}</TableCell>
-                    <TableCell>
-                      {new Date(booking.travelDate).toLocaleDateString()}
-                    </TableCell>
-                    <TableCell>{booking.numberOfTravelers}</TableCell>
-                    <TableCell>${booking.totalPrice.toFixed(2)}</TableCell>
-                    <TableCell>{booking.status}</TableCell>
-                    <TableCell>
-                      <FormControl size="small" fullWidth>
-                        <Select
-                          value={booking.status}
-                          onChange={(e) =>
-                            handleUpdateBookingStatus(
-                              booking.id,
-                              e.target.value as 'pending' | 'confirmed' | 'cancelled'
-                            )
-                          }
-                        >
-                          <MenuItem value="pending">Pending</MenuItem>
-                          <MenuItem value="confirmed">Confirmed</MenuItem>
-                          <MenuItem value="cancelled">Cancelled</MenuItem>
-                          <MenuItem value="completed">Completed</MenuItem>
-                        </Select>
-                      </FormControl>
+                {bookingsList.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={7} align="center">
+                      <Typography variant="body2" color="textSecondary">
+                        No bookings found
+                      </Typography>
                     </TableCell>
                   </TableRow>
-                ))}
+                ) : (
+                  bookingsList.map((booking) => (
+                    <TableRow key={booking.id}>
+                      <TableCell>
+                        <Typography variant="subtitle2">
+                          {booking.user?.firstName} {booking.user?.lastName}
+                        </Typography>
+                        <Typography variant="caption" color="textSecondary">
+                          {booking.user?.email}
+                        </Typography>
+                        <br />
+                        <Typography variant="caption" color="textSecondary">
+                          ID: {booking.user?.id}
+                        </Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="subtitle2">
+                          {booking.travelPackage?.name}
+                        </Typography>
+                        <Typography variant="caption" color="textSecondary">
+                          {booking.travelPackage?.destination}
+                        </Typography>
+                        <br />
+                        <Typography variant="caption" color="textSecondary">
+                          ${booking.travelPackage?.price} per person
+                        </Typography>
+                      </TableCell>
+                      <TableCell>
+                        {new Date(booking.travelDate).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell>{booking.numberOfTravelers}</TableCell>
+                      <TableCell>
+                        <Typography variant="subtitle2">
+                          ${Number(booking.totalPrice || 0).toFixed(2)}
+                        </Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Chip
+                          label={booking.status.toUpperCase()}
+                          color={getStatusColor(booking.status) as 'success' | 'error' | 'warning' | 'primary' | 'default'}
+                          size="small"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <FormControl size="small" sx={{ minWidth: 120 }}>
+                          <Select
+                            value={booking.status}
+                            onChange={(e) =>
+                              handleUpdateBookingStatus(
+                                booking.id,
+                                e.target.value as 'pending' | 'confirmed' | 'cancelled' | 'completed'
+                              )
+                            }
+                            disabled={false}
+                          >
+                            <MenuItem value="pending">Pending</MenuItem>
+                            <MenuItem value="confirmed">Confirmed</MenuItem>
+                            <MenuItem value="cancelled">Cancelled</MenuItem>
+                            <MenuItem value="completed">Completed</MenuItem>
+                          </Select>
+                        </FormControl>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
               </TableBody>
             </Table>
           </TableContainer>

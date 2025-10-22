@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { TravelPackage } from '../models/TravelPackage';
+import { Booking } from '../models/Booking';
 import { AppDataSource } from '../config/database';
 
 export class TravelPackageController {
@@ -90,6 +91,75 @@ export class TravelPackageController {
     } catch (error) {
       console.error('Error updating package:', error);
       res.status(500).json({ message: 'Error updating travel package' });
+    }
+  }
+
+  static async makePackageUnavailable(req: Request, res: Response) {
+    try {
+      const packageRepository = AppDataSource.getRepository(TravelPackage);
+      const travelPackage = await packageRepository.findOne({ 
+        where: { id: req.params.id }
+      });
+      
+      if (!travelPackage) {
+        return res.status(404).json({ message: 'Package not found' });
+      }
+      
+      // Make package unavailable (soft delete)
+      travelPackage.isAvailable = false;
+      await packageRepository.save(travelPackage);
+      
+      res.json({ 
+        message: 'Package made unavailable successfully. No new bookings can be made for this package.',
+        package: travelPackage
+      });
+    } catch (error) {
+      console.error('Error making package unavailable:', error);
+      res.status(500).json({ message: 'Error making package unavailable' });
+    }
+  }
+
+  static async deletePackage(req: Request, res: Response) {
+    try {
+      const packageRepository = AppDataSource.getRepository(TravelPackage);
+      const bookingRepository = AppDataSource.getRepository(Booking);
+      
+      const travelPackage = await packageRepository.findOne({ 
+        where: { id: req.params.id }
+      });
+      
+      if (!travelPackage) {
+        return res.status(404).json({ message: 'Package not found' });
+      }
+      
+      // Check if package has any active bookings
+      const activeBookings = await bookingRepository.find({
+        where: { 
+          travelPackage: { id: req.params.id },
+          status: 'pending'
+        }
+      });
+      
+      const confirmedBookings = await bookingRepository.find({
+        where: { 
+          travelPackage: { id: req.params.id },
+          status: 'confirmed'
+        }
+      });
+      
+      const totalActiveBookings = activeBookings.length + confirmedBookings.length;
+      
+      if (totalActiveBookings > 0) {
+        return res.status(400).json({ 
+          message: `Cannot delete package. It has ${totalActiveBookings} active booking(s). Please cancel all bookings first.` 
+        });
+      }
+      
+      await packageRepository.remove(travelPackage);
+      res.json({ message: 'Package deleted successfully' });
+    } catch (error) {
+      console.error('Error deleting package:', error);
+      res.status(500).json({ message: 'Error deleting travel package' });
     }
   }
 }
