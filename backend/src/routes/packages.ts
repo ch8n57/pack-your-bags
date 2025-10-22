@@ -12,6 +12,7 @@ router.get('/:id', TravelPackageController.getPackageById);
 // Admin only routes
 router.post('/', [auth, adminAuth], TravelPackageController.createPackage);
 router.put('/:id', [auth, adminAuth], TravelPackageController.updatePackage);
-// TODO: add delete when needed
+router.patch('/:id/unavailable', [auth, adminAuth], TravelPackageController.makePackageUnavailable);
+router.delete('/:id', [auth, adminAuth], TravelPackageController.deletePackage);
 
 export default router;

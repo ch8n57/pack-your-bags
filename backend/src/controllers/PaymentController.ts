@@ -7,7 +7,11 @@ import { Payment } from '../models/Payment';
 import { Booking } from '../models/Booking';
 import { User } from '../models/User';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '');
+// Initialize Stripe with fallback for development
+const stripeSecretKey = process.env.STRIPE_SECRET_KEY || 'sk_test_placeholder';
+const stripe = stripeSecretKey !== 'sk_test_placeholder' 
+  ? new Stripe(stripeSecretKey)
+  : null;
 
 interface AuthRequest extends Request {
   user?: {
@@ -29,6 +33,14 @@ export class PaymentController {
 
       if (!booking) {
         return res.status(404).json({ message: 'Booking not found' });
+      }
+
+      // If Stripe is not configured, return a mock client secret for development
+      if (!stripe) {
+        console.log('Stripe not configured, using mock payment intent');
+        return res.json({
+          clientSecret: `pi_mock_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+        });
       }
 
       // Create a PaymentIntent with the booking amount
@@ -94,6 +106,43 @@ export class PaymentController {
     try {
       const { paymentIntentId, bookingId } = req.body;
 
+      // If Stripe is not configured, handle mock payment
+      if (!stripe) {
+        console.log('Stripe not configured, processing mock payment');
+        
+        const bookingRepository = AppDataSource.getRepository(Booking);
+        const paymentRepository = AppDataSource.getRepository(Payment);
+
+        const booking = await bookingRepository.findOne({
+          where: { id: bookingId },
+          relations: ['user']
+        });
+
+        if (!booking) {
+          return res.status(404).json({ message: 'Booking not found' });
+        }
+
+        // Update booking status
+        booking.status = 'confirmed';
+        await bookingRepository.save(booking);
+
+        // Create payment record
+        const payment = paymentRepository.create({
+          booking,
+          amount: booking.totalPrice,
+          status: 'completed',
+          transactionId: paymentIntentId,
+          paymentMode: 'mock',
+          paymentDetails: {
+            provider: 'mock'
+          }
+        });
+
+        await paymentRepository.save(payment);
+
+        return res.json({ message: 'Mock payment confirmed successfully' });
+      }
+
       // Verify the payment intent with Stripe
       const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
       
@@ -133,6 +182,77 @@ export class PaymentController {
     }
   }
 
+  static async processAutoPayment(req: AuthRequest, res: Response) {
+    try {
+      const { bookingId } = req.body;
+
+      const bookingRepository = AppDataSource.getRepository(Booking);
+      const paymentRepository = AppDataSource.getRepository(Payment);
+
+      const booking = await bookingRepository.findOne({ 
+        where: { id: bookingId },
+        relations: ['travelPackage', 'user']
+      });
+
+      if (!booking) {
+        return res.status(404).json({ message: 'Booking not found' });
+      }
+
+      // Check if booking belongs to the authenticated user
+      if (booking.user.id !== req.user?.userId) {
+        return res.status(403).json({ message: 'Unauthorized' });
+      }
+
+      // Update booking status to confirmed
+      booking.status = 'confirmed';
+      await bookingRepository.save(booking);
+
+      // Find existing payment record and update it
+      const existingPayment = await paymentRepository.findOne({
+        where: { booking: { id: bookingId } }
+      });
+
+      let payment;
+      if (existingPayment) {
+        // Update existing payment
+        existingPayment.status = 'completed';
+        existingPayment.transactionId = `auto_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        existingPayment.paymentMode = 'auto';
+        existingPayment.paymentDetails = {
+          provider: 'auto'
+        };
+        await paymentRepository.save(existingPayment);
+        payment = existingPayment;
+      } else {
+        // Create new payment record if none exists
+        payment = paymentRepository.create({
+          booking,
+          amount: booking.totalPrice,
+          status: 'completed',
+          transactionId: `auto_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          paymentMode: 'auto',
+          paymentDetails: {
+            provider: 'auto'
+          }
+        });
+        await paymentRepository.save(payment);
+      }
+
+      res.json({ 
+        message: 'Payment processed successfully',
+        payment: {
+          id: payment.id,
+          amount: payment.amount,
+          status: payment.status,
+          transactionId: payment.transactionId
+        }
+      });
+    } catch (error) {
+      console.error('Error processing auto payment:', error);
+      res.status(500).json({ message: 'Error processing payment' });
+    }
+  }
+
   static async processRefund(req: AuthRequest, res: Response) {
     try {
       if (req.user?.role !== 'admin') {
@@ -148,6 +268,23 @@ export class PaymentController {
 
       if (!payment) {
         return res.status(404).json({ message: 'Payment not found' });
+      }
+
+      // If Stripe is not configured, handle mock refund
+      if (!stripe) {
+        console.log('Stripe not configured, processing mock refund');
+        
+        // Update payment status
+        payment.status = 'refunded';
+        await paymentRepository.save(payment);
+
+        // Update booking status
+        const bookingRepository = AppDataSource.getRepository(Booking);
+        const booking = payment.booking;
+        booking.status = 'cancelled';
+        await bookingRepository.save(booking);
+
+        return res.json({ message: 'Mock refund processed successfully' });
       }
 
       // Process refund through Stripe

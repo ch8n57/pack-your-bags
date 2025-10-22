@@ -93,15 +93,38 @@ export class BookingController {
     }
   }
 
-  static async updateBookingStatus(req: Request, res: Response) {
+  static async updateBookingStatus(req: AuthRequest, res: Response) {
     try {
       const bookingRepository = AppDataSource.getRepository(Booking);
       const { id } = req.params;
       const { status } = req.body;
 
-      const booking = await bookingRepository.findOne({ where: { id } });
+      const booking = await bookingRepository.findOne({ 
+        where: { id },
+        relations: ['user']
+      });
+      
       if (!booking) {
         return res.status(404).json({ message: 'Booking not found' });
+      }
+
+      // Check if user is admin or the booking owner
+      if (req.user?.role !== 'admin' && booking.user.id !== req.user?.userId) {
+        return res.status(403).json({ message: 'Unauthorized to update this booking' });
+      }
+
+      // If cancelling a confirmed booking, handle payment refund
+      if (booking.status === 'confirmed' && status === 'cancelled') {
+        const paymentRepository = AppDataSource.getRepository(Payment);
+        const payment = await paymentRepository.findOne({
+          where: { booking: { id } }
+        });
+
+        if (payment && payment.status === 'completed') {
+          // Update payment status to refunded
+          payment.status = 'refunded';
+          await paymentRepository.save(payment);
+        }
       }
 
       booking.status = status;

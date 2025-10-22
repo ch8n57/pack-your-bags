@@ -52,7 +52,7 @@ export class ErrorBoundary extends Component<Props, State> {
             >
               Refresh Page
             </Button>
-            {process.env.NODE_ENV === 'development' && (
+            {import.meta.env.DEV && (
               <Box sx={{ mt: 4, p: 2, bgcolor: 'grey.100', borderRadius: 1 }}>
                 <Typography variant="body2" color="error" sx={{ wordBreak: 'break-word' }}>
                   {this.state.error?.toString()}

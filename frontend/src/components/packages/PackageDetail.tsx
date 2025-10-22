@@ -118,7 +118,7 @@ export const PackageDetail = () => {
       const response = await bookings.create(bookingPayload);
       setBookingDialogOpen(false);
       setPaymentDialogOpen(true);
-      setCurrentBooking(response.data);
+      setCurrentBooking(response.data.booking);
     } catch (error: any) {
       setToast({
         open: true,
@@ -133,45 +133,47 @@ export const PackageDetail = () => {
   if (!travelPackage) return null;
 
   return (
-    <Container>
-      <Box sx={{ my: 4 }}>
-        <Card>
+    <Container maxWidth="lg" sx={{ animation: 'fadeIn 0.6s ease' }}>
+      <Box sx={{ my: 6 }}>
+        <Card sx={{ borderRadius: 4, overflow: 'hidden', boxShadow: '0 8px 32px rgba(0,0,0,0.12)', border: '1px solid rgba(0,0,0,0.06)' }}>
           <CardMedia
             component="img"
-            height="400"
+            height="500"
             image={`/images/packages/${travelPackage.destination}${travelPackage.destination === 'Taj Mahal' ? '.avif' : travelPackage.destination === 'Heads' ? '.jpeg' : travelPackage.destination === 'Temple' ? '.jpeg' : '.jpg'}`}
             onError={(e) => {
               const target = e.target as HTMLImageElement;
               target.src = '/images/packages/default.jpg';
             }}
             alt={travelPackage.destination}
+            sx={{ objectFit: 'cover' }}
           />
-          <CardContent>
-            <Typography variant="h4" gutterBottom>
+          <CardContent sx={{ p: 5 }}>
+            <Typography variant="h3" gutterBottom sx={{ fontWeight: 700, letterSpacing: '-0.02em', mb: 2 }}>
               {travelPackage.name}
             </Typography>
-            <Typography variant="h6" color="text.secondary" gutterBottom>
+            <Typography variant="h5" color="text.secondary" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3 }}>
+              <span style={{ fontSize: '1.5rem' }}>📍</span>
               {travelPackage.destination}
             </Typography>
-            <Typography variant="body1" paragraph>
+            <Typography variant="body1" paragraph sx={{ fontSize: '1.1rem', lineHeight: 1.8, color: 'text.secondary', mb: 4 }}>
               {travelPackage.description}
             </Typography>
-            <Box sx={{ my: 3 }}>
-              <Typography variant="h5" gutterBottom>
+            <Box sx={{ my: 5, p: 4, bgcolor: 'rgba(25, 118, 210, 0.04)', borderRadius: 3, border: '1px solid rgba(25, 118, 210, 0.1)' }}>
+              <Typography variant="h5" gutterBottom sx={{ fontWeight: 700, mb: 3 }}>
                 Package Details
               </Typography>
-              <Typography variant="h6">
+              <Typography variant="h4" sx={{ color: 'primary.main', fontWeight: 700, mb: 2 }}>
                 Price: ${Number(travelPackage.price).toFixed(2)} per person
               </Typography>
-              <Typography variant="subtitle1">
+              <Typography variant="h6" sx={{ color: 'text.secondary', mb: 1.5, fontWeight: 500 }}>
                 Duration: {travelPackage.duration} days
               </Typography>
-              <Typography variant="subtitle1">
+              <Typography variant="h6" sx={{ color: 'text.secondary', mb: 1.5, fontWeight: 500 }}>
                 Max Travelers: {travelPackage.maxTravelers}
               </Typography>
             </Box>
-            <Box sx={{ my: 3 }}>
-              <Typography variant="h5" gutterBottom>
+            <Box sx={{ my: 5 }}>
+              <Typography variant="h5" gutterBottom sx={{ fontWeight: 700, mb: 3 }}>
                 Inclusions
               </Typography>
               <List>
@@ -190,6 +192,19 @@ export const PackageDetail = () => {
               size="large"
               fullWidth
               onClick={() => setBookingDialogOpen(true)}
+              sx={{
+                py: 2,
+                fontSize: '1.1rem',
+                fontWeight: 600,
+                textTransform: 'none',
+                borderRadius: 3,
+                boxShadow: 'none',
+                transition: 'all 0.3s ease',
+                '&:hover': {
+                  boxShadow: '0 8px 24px rgba(25, 118, 210, 0.35)',
+                  transform: 'translateY(-2px)'
+                }
+              }}
             >
               Book Now
             </Button>
@@ -251,10 +266,15 @@ export const PackageDetail = () => {
       {currentBooking && (
         <PaymentDialog
           open={paymentDialogOpen}
-          onClose={() => setPaymentDialogOpen(false)}
+          onClose={() => {
+            setPaymentDialogOpen(false);
+            setCurrentBooking(null);
+          }}
           bookingId={currentBooking.id}
           amount={currentBooking.totalPrice}
           onPaymentSuccess={() => {
+            setPaymentDialogOpen(false);
+            setCurrentBooking(null);
             setToast({
               open: true,
               message: 'Booking and payment completed successfully!',

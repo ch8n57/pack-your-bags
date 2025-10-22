@@ -10,6 +10,9 @@ router.post('/create-payment-intent', auth, PaymentController.createPaymentInten
 // Confirm payment (alternative to webhook)
 router.post('/confirm-payment', auth, PaymentController.confirmPayment);
 
+// Auto payment (simplified payment processing)
+router.post('/auto-payment', auth, PaymentController.processAutoPayment);
+
 // Handle Stripe webhook
 router.post('/stripe/webhook', express.raw({ type: 'application/json' }), PaymentController.handleStripeWebhook);
 
